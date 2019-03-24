@@ -208,7 +208,7 @@ void GenerateMIPSCode(Node root, char position) {
     }
 }
 int main(int argc, char *argv[]) {
-    fp = fopen("program.asm", "w");
+    fp = fopen("expression.asm", "w");
     fprintf(fp, ".text # text section \n");
     fprintf(fp, ".globl main # call main by SPIM \n");
     fprintf(fp, "main:\n");

@@ -196,10 +196,6 @@ void GenerateStacksCode(Node root, char position) {
     }
 }
 int main(int argc, char *argv[]) {
-    fp = fopen("program.asm", "w");
-    fprintf(fp, ".text # text section \n");
-    fprintf(fp, ".globl main # call main by SPIM \n");
-    fprintf(fp, "main:\n");
     register Node result;
     if (argc == 2) {
         SInit(argv[1]);
@@ -209,11 +205,5 @@ int main(int argc, char *argv[]) {
         GenerateStacksCode(result, right);
     } else
         printf("usage: expreval <filename>\n");
-    fprintf(fp, "addi $sp, $sp, 4\n");
-    fprintf(fp, "li $v0, 1\n");
-    fprintf(fp, "syscall\n");
-    fprintf(fp, "end:\n");
-    fprintf(fp, "li $v0, 10 # system call 10 for exit\n");
-    fprintf(fp, "syscall # we are out of here.\n");
     return 0;
 }
