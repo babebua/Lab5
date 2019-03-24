@@ -18,7 +18,7 @@ enum {
     eof,
     illegal
 };
-
+enum { center, right, left };
 typedef struct NodeDesc *Node;
 typedef struct NodeDesc {
     char kind;        // plus, minus, times, divide, number
@@ -144,51 +144,51 @@ static Node Expr() {
     return root;
 }
 
-void GenerateStacksCode(Node root, int position) {
+void GenerateStacksCode(Node root, char position) {
     if (root != NULL) {
-        if (root->kind == number && position == -1) {
+        if (root->kind == number && position == left) {
             printf("acc << %d\n", root->val);
             printf("push acc\n");
             return;
-        } else if (root->kind == number && position == 1) {
+        } else if (root->kind == number && position == right) {
             printf("acc << %d\n", root->val);
             return;
         }
-        GenerateStacksCode(root->left, -1);
-        GenerateStacksCode(root->right, 1);
+        GenerateStacksCode(root->left, left);
+        GenerateStacksCode(root->right, right);
         switch (root->kind) {
         case plus:
             printf("acc << acc + tos\n");
             printf("pop\n");
-            if (position == -1) {
+            if (position == left) {
                 printf("push acc\n");
             }
             return;
         case minus:
             printf("acc << acc - tos\n");
             printf("pop\n");
-            if (position == -1) {
+            if (position == left) {
                 printf("push acc\n");
             }
             return;
         case times:
             printf("acc << acc * tos\n");
             printf("pop\n");
-            if (position == -1) {
+            if (position == left) {
                 printf("push acc\n");
             }
             return;
         case divide:
             printf("acc << acc / tos\n");
             printf("pop\n");
-            if (position == -1) {
+            if (position == left) {
                 printf("push acc\n");
             }
             return;
         case mod:
             printf("acc << acc %% tos\n");
             printf("pop\n");
-            if (position == -1) {
+            if (position == left) {
                 printf("push acc\n");
             }
             return;
@@ -200,13 +200,13 @@ int main(int argc, char *argv[]) {
     fprintf(fp, ".text # text section \n");
     fprintf(fp, ".globl main # call main by SPIM \n");
     fprintf(fp, "main:\n");
-    register Node result, diffr, simplifyr;
+    register Node result;
     if (argc == 2) {
         SInit(argv[1]);
         sym = SGet();
         result = Expr();
         assert(sym == eof);
-        GenerateStacksCode(result, 1);
+        GenerateStacksCode(result, right);
     } else
         printf("usage: expreval <filename>\n");
     fprintf(fp, "addi $sp, $sp, 4\n");

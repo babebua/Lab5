@@ -18,7 +18,7 @@ enum {
     eof,
     illegal
 };
-
+enum { center, right, left };
 typedef struct NodeDesc *Node;
 typedef struct NodeDesc {
     char kind;        // plus, minus, times, divide, number
@@ -144,25 +144,25 @@ static Node Expr() {
     return root;
 }
 
-void GenerateMIPSCode(Node root, int position) {
+void GenerateMIPSCode(Node root, char position) {
     if (root != NULL) {
-        if (root->kind == number && position == -1) {
+        if (root->kind == number && position == left) {
             fprintf(fp, "li $a0 %d\n", root->val);
             fprintf(fp, "sw $a0 ,0($sp)\n");
             fprintf(fp, "addi $sp ,$sp, -4\n");
             return;
-        } else if (root->kind == number && position == 1) {
+        } else if (root->kind == number && position == right) {
             fprintf(fp, "li $a0 %d\n", root->val);
             return;
         }
-        GenerateMIPSCode(root->left, -1);
-        GenerateMIPSCode(root->right, 1);
+        GenerateMIPSCode(root->left, left);
+        GenerateMIPSCode(root->right, right);
         switch (root->kind) {
         case plus:
             fprintf(fp, "lw $t1, 4($sp)\n");
             fprintf(fp, "add $a0, $t1, $a0\n");
             fprintf(fp, "addi $sp, $sp, 4\n");
-            if (position == -1) {
+            if (position == left) {
                 fprintf(fp, "sw $a0, 0($sp)\n");
                 fprintf(fp, "addi $sp, $sp, -4\n");
             }
@@ -171,7 +171,7 @@ void GenerateMIPSCode(Node root, int position) {
             fprintf(fp, "lw $t1, 4($sp)\n");
             fprintf(fp, "sub $a0, $t1, $a0\n");
             fprintf(fp, "addi $sp, $sp, 4\n");
-            if (position == -1) {
+            if (position == left) {
                 fprintf(fp, "sw $a0, 0($sp)\n");
                 fprintf(fp, "addi $sp, $sp, -4\n");
             }
@@ -180,7 +180,7 @@ void GenerateMIPSCode(Node root, int position) {
             fprintf(fp, "lw $t1, 4($sp)\n");
             fprintf(fp, "mul $a0, $t1, $a0\n");
             fprintf(fp, "addi $sp, $sp, 4\n");
-            if (position == -1) {
+            if (position == left) {
                 fprintf(fp, "sw $a0, 0($sp)\n");
                 fprintf(fp, "addi $sp, $sp, -4\n");
             }
@@ -189,7 +189,7 @@ void GenerateMIPSCode(Node root, int position) {
             fprintf(fp, "lw $t1, 4($sp)\n");
             fprintf(fp, "div $t1, $a0\n");
             fprintf(fp, "mflo $a0\n");
-            if (position == -1) {
+            if (position == left) {
                 fprintf(fp, "sw $a0, 0($sp)\n");
                 fprintf(fp, "addi $sp, $sp, -4\n");
             }
@@ -199,7 +199,7 @@ void GenerateMIPSCode(Node root, int position) {
             fprintf(fp, "div $t1, $a0\n");
             fprintf(fp, "mfhi $a0\n");
             fprintf(fp, "addi $sp, $sp, 4\n");
-            if (position == -1) {
+            if (position == left) {
                 fprintf(fp, "sw $a0, 0($sp)\n");
                 fprintf(fp, "addi $sp, $sp, -4\n");
             }
@@ -212,13 +212,13 @@ int main(int argc, char *argv[]) {
     fprintf(fp, ".text # text section \n");
     fprintf(fp, ".globl main # call main by SPIM \n");
     fprintf(fp, "main:\n");
-    register Node result, diffr, simplifyr;
+    register Node result;
     if (argc == 2) {
         SInit(argv[1]);
         sym = SGet();
         result = Expr();
         assert(sym == eof);
-        GenerateMIPSCode(result,  1);
+        GenerateMIPSCode(result, right);
     } else
         printf("usage: expreval <filename>\n");
     fprintf(fp, "addi $sp, $sp, 4\n");
